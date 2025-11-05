@@ -1,0 +1,90 @@
+{
+  "messages": [
+    {
+      "time": 1762291197.649651,
+      "type": "msg",
+      "id": "97cb3830-b103-45b4-8bc3-d5a5c03f767a",
+      "attachments": [
+        "4f67da20-f385-4d66-9ef3-76d4ac892280"
+      ],
+      "body": "What does this code cell do? (starting with creating sentiment_category column)",
+      "sender": "8992a1a198114a8289ae88cb6589bfe8",
+      "raw_time": false
+    },
+    {
+      "raw_time": false,
+      "sender": "jupyter-ai-personas::jupyter_ai::JupyternautPersona",
+      "time": 1762291198.8121984,
+      "type": "msg",
+      "mentions": [],
+      "body": "Let\u2019s break down what the code cell does step by step \u2014 starting from the creation of the `sentiment_category` column.  \n\n---\n\n### **1. Create a new column `sentiment_category`**\n```python\ndf['sentiment_category'] = pd.cut(\n    df['rating'],\n    bins=[0, 2, 3, 5],\n    labels=['Negative', 'Neutral', 'Positive']\n)\n```\n- The `pd.cut()` function categorizes the numeric ratings (from 1 to 5) into **three sentiment categories**:\n  - Ratings **1\u20132 \u2192 \u201cNegative\u201d**  \n  - Rating **3 \u2192 \u201cNeutral\u201d**  \n  - Ratings **4\u20135 \u2192 \u201cPositive\u201d**  \n- The result is added as a new column `sentiment_category` in the DataFrame.\n\n---\n\n### **2. Group and aggregate the data**\n```python\nanalysis = (\n    df.groupby(['product_category', 'sentiment_category'])\n      .agg(\n          rating_count=('rating', 'count'),\n          product_id_nunique=('product_id', 'nunique')\n      )\n      .reset_index()\n)\n```\n- Groups the data by both **product category** and **sentiment**.\n- Calculates two metrics for each group:\n  - `rating_count`: how many reviews fall into that group  \n  - `product_id_nunique`: how many **distinct products** appear in that group  \n- The `.reset_index()` ensures the result is a flat DataFrame instead of a MultiIndex.\n\n---\n\n### **3. Fill any missing groups with zeros**\n```python\nanalysis = analysis.fillna({\n    'rating_count': 0,\n    'product_id_nunique': 0\n})\n```\n- Some category/sentiment combinations may have no reviews; those missing values are replaced with `0`.\n\n---\n\n### **4. Calculate the percentage of negative reviews**\n```python\ncategory_counts = df.groupby('product_category').size()\nnegative_counts = (\n    df[df['sentiment_category'] == 'Negative']\n    .groupby('product_category')\n    .size()\n)\nnegative_pct = (negative_counts / category_counts * 100).fillna(0)\n```\n- Computes the total number of reviews (`category_counts`) and negative reviews (`negative_counts`) for each product category.\n- Calculates the **percentage of negative reviews** for each category.\n\n---\n\n### **5. Display results**\n```python\nprint(\"Review analysis by category and sentiment:\")\nprint(analysis)\nprint(\"\\nPercentage of negative reviews by category:\")\nprint(negative_pct.round(1))\n```\n- Prints a table summarizing review counts and product coverage by sentiment.\n- Prints the percentage of negative reviews per product category, rounded to one decimal.\n\n---\n\n\u2705 **In summary:**\nThis code performs a **sentiment categorization and summary analysis** of product reviews.  \nIt classifies reviews into negative, neutral, and positive categories, aggregates review counts by product category, and calculates what portion of reviews are negative for each category.",
+      "id": "0b794576-5b15-4c08-8313-045de3058ce8"
+    },
+    {
+      "sender": "8992a1a198114a8289ae88cb6589bfe8",
+      "raw_time": false,
+      "time": 1762291239.1246793,
+      "attachments": [
+        "44b867af-eb2b-439e-9ffc-e3bd8523f916"
+      ],
+      "type": "msg",
+      "body": "Follow the instructions in the Markdown cell to generate code (3 notebook cells) to analyze the data.",
+      "id": "715adad7-3a95-4e92-bdec-4d8cd9f1299d"
+    },
+    {
+      "raw_time": false,
+      "mentions": [],
+      "type": "msg",
+      "id": "429f6905-7ace-4899-a765-860ff51fc043",
+      "body": "Here\u2019s the corresponding code for the **3 notebook cells** described in the Markdown instructions \u2014 each implementing one of the analysis steps.\n\n---\n\n### \ud83e\udde9 **Step 1 \u2014 Extract the reviews in a list**\n\n```python\n# Step 1: Extract reviews from the DataFrame\ncombined_reviews = df[\"review_text\"].tolist()\n\n# Display the first few reviews to verify\ncombined_reviews[:5]\n```\n\n---\n\n### \ud83e\udde0 **Step 2 \u2014 Use GPT-4.1-mini to summarize product & service issues**\n\n```python\n# Step 2: Summarize product and service issues using OpenAI's gpt-4.1-mini\n\nfrom openai import OpenAI\nfrom dotenv import load_dotenv\nimport os\n\n# Load OpenAI API key from environment (already available in this environment)\nload_dotenv()\n\nclient = OpenAI(api_key=os.getenv(\"OPENAI_API_KEY\"))\n\nprompt = f\"\"\"\nYou are analyzing customer reviews to identify product and service issues.\n\nBelow are customer reviews for a set of products. Please analyze them and provide:\n\n1. **Common Product Issues**: List the main problems customers reported about the product itself (quality, functionality, features, etc.)\n2. **Common Service Issues**: List the main problems customers reported about the service (shipping, customer support, packaging, etc.)\n3. **Frequency**: For each issue, estimate how often it appears (e.g., \"mentioned frequently\", \"occasional complaint\", \"rare issue\")\n\nFormat your response clearly with headers and bullet points.\n\nCUSTOMER REVIEWS:\n{combined_reviews}\n\"\"\"\n\nresponse = client.chat.completions.create(\n    model=\"gpt-4.1-mini\",\n    messages=[{\"role\": \"user\", \"content\": prompt}]\n)\n\nsummary = response.choices[0].message.content\n```\n\n---\n\n### \ud83d\udcbe **Step 3 \u2014 Print & Save the summary**\n\n```python\n# Step 3: Print and save the summary to a Markdown file\n\nprint(summary)\n\nwith open(\"customer_reviews.md\", \"w\", encoding=\"utf-8\") as f:\n    f.write(summary)\n\nprint(\"\\n\u2705 Summary saved to 'customer_reviews.md'.\")\n```\n\n---\n\nWould you like me to modify this to also include automatic sentiment scoring (so the summary links to sentiment categories), or keep it exactly as written above?",
+      "time": 1762291242.3176353,
+      "sender": "jupyter-ai-personas::jupyter_ai::JupyternautPersona"
+    }
+  ],
+  "users": {
+    "8992a1a198114a8289ae88cb6589bfe8": {
+      "color": "var(--jp-collaborator-color2)",
+      "initials": "AV",
+      "bot": false,
+      "avatar_url": null,
+      "name": "Anonymous Valetudo",
+      "mention_name": "Anonymous-Valetudo",
+      "username": "8992a1a198114a8289ae88cb6589bfe8",
+      "display_name": "Anonymous Valetudo"
+    },
+    "jupyter-ai-personas::jupyter_ai::JupyternautPersona": {
+      "name": "Jupyternaut",
+      "avatar_url": "/api/ai/static/jupyternaut.svg",
+      "bot": true,
+      "username": "jupyter-ai-personas::jupyter_ai::JupyternautPersona",
+      "initials": null,
+      "display_name": "Jupyternaut",
+      "color": null
+    }
+  },
+  "attachments": {
+    "44b867af-eb2b-439e-9ffc-e3bd8523f916": {
+      "value": "L1 - Coding with Jupyter AI.ipynb",
+      "type": "notebook",
+      "cells": [
+        {
+          "id": "78c0def3-e081-40c3-961a-2b6be4a18304",
+          "input_type": "markdown"
+        }
+      ]
+    },
+    "4f67da20-f385-4d66-9ef3-76d4ac892280": {
+      "type": "notebook",
+      "value": "L1 - Coding with Jupyter AI.ipynb",
+      "cells": [
+        {
+          "input_type": "code",
+          "id": "347efcf1-09d8-4bc8-a08f-7f246a39f2fb"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "id": "b9470c14-5e59-4958-bc98-226393247c2f"
+  }
+}

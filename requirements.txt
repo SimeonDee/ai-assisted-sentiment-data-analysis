@@ -1,0 +1,6 @@
+# Core JupyterAI (V3 beta - use specific version)
+# Latest stable: 2.31.6 | Latest beta: 3.0.0b7
+jupyter-ai>=3.0.0b7
+openai>=1.0.0
+python-dotenv>=1.0.0
+pandas>=2.0.0

@@ -1,6 +1,11 @@
 # ai-assisted-sentiment-data-analysis
 Sentiment Analysis of customer reviews with LLM integration for reporting and insight generation on common product issues, common service issues, frequency of reported issues.
 
+---
+`Adedoyin Simeon Adeyemi` | [LinkedIn](https://www.linkedin.com/in/adedoyin-adeyemi-a7827b160/)
+
+---
+
 ## Tools Used:
 
 - Jupyter AI
